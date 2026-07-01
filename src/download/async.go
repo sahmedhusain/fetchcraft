@@ -14,6 +14,28 @@ import (
 	"wget/src/config"
 )
 
+
+func styleSizeList(sizesStr string, quiet bool) string {
+	if quiet {
+		return "content size: [" + sizesStr + "]"
+	}
+	return ColorBlue + ColorBold + "content size: " + ColorReset + ColorYellow + "[" + sizesStr + "]" + ColorReset
+}
+
+func styleFinished(filename string, quiet bool) string {
+	if quiet {
+		return "finished " + filename
+	}
+	return ColorGreen + "finished " + ColorReset + ColorCyan + filename + ColorReset
+}
+
+func styleDownloadFinished(finalList string, quiet bool) string {
+	if quiet {
+		return "Download finished:  [" + finalList + "]"
+	}
+	return ColorGreen + ColorBold + "Download finished:  [" + ColorReset + ColorCyan + finalList + ColorGreen + ColorBold + "]" + ColorReset
+}
+
 // Downloads files from a list of URLs in the input file asynchronously.
 func DownloadMultiple(cfg *config.Config) error {
 	file, err := os.Open(cfg.InputFile)
@@ -89,7 +111,7 @@ func DownloadMultiple(cfg *config.Config) error {
 	for i, s := range sizes {
 		sizeStrList[i] = fmt.Sprintf("%d", s)
 	}
-	fmt.Printf("content size: [%s]\n", strings.Join(sizeStrList, ", "))
+	fmt.Println(styleSizeList(strings.Join(sizeStrList, ", "), cfg.Background))
 
 	// 2. Perform concurrent downloads
 	var wg sync.WaitGroup
@@ -171,7 +193,7 @@ func DownloadMultiple(cfg *config.Config) error {
 			}
 
 			filename := filepath.Base(targetPath)
-			fmt.Printf("finished %s\n", filename)
+			fmt.Println(styleFinished(filename, cfg.Background))
 
 			mu.Lock()
 			downloadedURLs = append(downloadedURLs, targetURL)
@@ -197,7 +219,7 @@ func DownloadMultiple(cfg *config.Config) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("Download finished:  [%s]\n", strings.Join(finalOrdered, " "))
+	fmt.Println(styleDownloadFinished(strings.Join(finalOrdered, " "), cfg.Background))
 
 	if firstErr != nil {
 		return firstErr

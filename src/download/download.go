@@ -89,10 +89,75 @@ func ParseRateLimit(rateStr string) (int64, error) {
 	return val * multiplier, nil
 }
 
-// Downloads a single URL.
+const (
+	ColorReset   = "\u001b[0m"
+	ColorBold    = "\u001b[1m"
+	ColorRed     = "\u001b[31m"
+	ColorGreen   = "\u001b[32m"
+	ColorYellow  = "\u001b[33m"
+	ColorBlue    = "\u001b[34m"
+	ColorMagenta = "\u001b[35m"
+	ColorCyan    = "\u001b[36m"
+	ColorGray    = "\u001b[90m"
+)
+
+func styleStart(t string, quiet bool) string {
+	if quiet {
+		return "start at " + t
+	}
+	return ColorGray + ColorBold + "start at " + ColorReset + ColorCyan + t + ColorReset
+}
+
+func styleEnd(t string, quiet bool) string {
+	if quiet {
+		return "finished at " + t
+	}
+	return ColorGray + ColorBold + "finished at " + ColorReset + ColorCyan + t + ColorReset
+}
+
+func styleRequest(quiet bool) string {
+	if quiet {
+		return "sending request, awaiting response... "
+	}
+	return ColorYellow + "sending request, awaiting response... " + ColorReset
+}
+
+func styleStatus(status string, quiet bool) string {
+	if quiet {
+		return "status " + status
+	}
+	color := ColorGreen
+	if !strings.Contains(status, "200") {
+		color = ColorRed
+	}
+	return ColorBold + "status " + ColorReset + color + ColorBold + status + ColorReset
+}
+
+func styleSize(sizeStr string, quiet bool) string {
+	if quiet {
+		return "content size: " + sizeStr
+	}
+	return ColorBlue + ColorBold + "content size: " + ColorReset + ColorYellow + sizeStr + ColorReset
+}
+
+func styleSaving(path string, quiet bool) string {
+	if quiet {
+		return "saving file to: " + path
+	}
+	return ColorBlue + ColorBold + "saving file to: " + ColorReset + ColorCyan + path + ColorReset
+}
+
+func styleDownloaded(url string, quiet bool) string {
+	if quiet {
+		return "Downloaded [" + url + "]"
+	}
+	return ColorGreen + ColorBold + "Downloaded [" + ColorReset + ColorCyan + url + ColorGreen + ColorBold + "]" + ColorReset
+}
+
+// DownloadFile downloads a single URL.
 func DownloadFile(cfg *config.Config, rawURL string) error {
 	startTime := time.Now()
-	fmt.Printf("start at %s\n", startTime.Format("2006-01-02 15:04:05"))
+	fmt.Println(styleStart(startTime.Format("2006-01-02 15:04:05"), cfg.Background))
 
 	targetPath, displayPath, err := GetDownloadPath(cfg, rawURL)
 	if err != nil {
@@ -104,7 +169,7 @@ func DownloadFile(cfg *config.Config, rawURL string) error {
 		return err
 	}
 
-	fmt.Printf("sending request, awaiting response... ")
+	fmt.Print(styleRequest(cfg.Background))
 
 	resp, err := http.Get(rawURL)
 	if err != nil {
@@ -113,14 +178,14 @@ func DownloadFile(cfg *config.Config, rawURL string) error {
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("status %s\n", resp.Status)
+	fmt.Println(styleStatus(resp.Status, cfg.Background))
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unsuccessful status: %s", resp.Status)
 	}
 
-	fmt.Printf("content size: %s\n", FormatContentSize(resp.ContentLength))
-	fmt.Printf("saving file to: %s\n", displayPath)
+	fmt.Println(styleSize(FormatContentSize(resp.ContentLength), cfg.Background))
+	fmt.Println(styleSaving(displayPath, cfg.Background))
 
 	// Create directories if OutputDir is specified
 	if cfg.OutputDir != "" {
@@ -146,8 +211,8 @@ func DownloadFile(cfg *config.Config, rawURL string) error {
 		fmt.Println()
 	}
 
-	fmt.Printf("Downloaded [%s]\n", rawURL)
-	fmt.Printf("finished at %s\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Println(styleDownloaded(rawURL, cfg.Background))
+	fmt.Println(styleEnd(time.Now().Format("2006-01-02 15:04:05"), cfg.Background))
 
 	return nil
 }

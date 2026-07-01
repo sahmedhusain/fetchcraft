@@ -99,6 +99,7 @@ func (pr *DownloadProgressReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
+
 func (pr *DownloadProgressReader) drawProgressBar() {
 	elapsed := time.Since(pr.startTime).Seconds()
 	if elapsed <= 0 {
@@ -119,10 +120,10 @@ func (pr *DownloadProgressReader) drawProgressBar() {
 			completedWidth = barWidth
 		}
 
-		bar := strings.Repeat("=", completedWidth)
-		if completedWidth < barWidth {
-			bar += strings.Repeat(" ", barWidth-completedWidth)
-		}
+		styledBar := ColorCyan + "[" + ColorReset +
+			ColorGreen + strings.Repeat("=", completedWidth) + ColorReset +
+			ColorGray + strings.Repeat(" ", barWidth-completedWidth) + ColorReset +
+			ColorCyan + "]" + ColorReset
 
 		var etaStr string
 		if speed > 0 {
@@ -132,19 +133,21 @@ func (pr *DownloadProgressReader) drawProgressBar() {
 			etaStr = "--"
 		}
 
-		fmt.Printf("\r %s / %s [%s] %6.2f%% %s %s\u001b[K",
-			FormatBytesBinary(float64(pr.downloaded)),
-			FormatBytesBinary(float64(pr.totalSize)),
-			bar,
-			pct,
-			FormatSpeed(speed),
-			etaStr,
+		fmt.Printf("\r %s%s%s / %s%s%s %s %s%6.2f%%%s %s%s%s %s%s%s\u001b[K",
+			ColorGreen, FormatBytesBinary(float64(pr.downloaded)), ColorReset,
+			ColorGreen, FormatBytesBinary(float64(pr.totalSize)), ColorReset,
+			styledBar,
+			ColorYellow, pct, ColorReset,
+			ColorMagenta, FormatSpeed(speed), ColorReset,
+			ColorBlue, etaStr, ColorReset,
 		)
 	} else {
 		// Unknown size progress
-		fmt.Printf("\r %s [   <=>   ] %s\u001b[K",
-			FormatBytesBinary(float64(pr.downloaded)),
-			FormatSpeed(speed),
+		styledBar := ColorCyan + "[" + ColorReset + ColorGreen + "   <=>   " + ColorReset + ColorCyan + "]" + ColorReset
+		fmt.Printf("\r %s%s%s %s %s%s%s\u001b[K",
+			ColorGreen, FormatBytesBinary(float64(pr.downloaded)), ColorReset,
+			styledBar,
+			ColorMagenta, FormatSpeed(speed), ColorReset,
 		)
 	}
 }
