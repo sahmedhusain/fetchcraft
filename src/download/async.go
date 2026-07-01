@@ -15,27 +15,6 @@ import (
 )
 
 
-func styleSizeList(sizesStr string, quiet bool) string {
-	if quiet {
-		return "content size: [" + sizesStr + "]"
-	}
-	return ColorBlue + ColorBold + "content size: " + ColorReset + ColorYellow + "[" + sizesStr + "]" + ColorReset
-}
-
-func styleFinished(filename string, quiet bool) string {
-	if quiet {
-		return "finished " + filename
-	}
-	return ColorGreen + "finished " + ColorReset + ColorCyan + filename + ColorReset
-}
-
-func styleDownloadFinished(finalList string, quiet bool) string {
-	if quiet {
-		return "Download finished:  [" + finalList + "]"
-	}
-	return ColorGreen + ColorBold + "Download finished:  [" + ColorReset + ColorCyan + finalList + ColorGreen + ColorBold + "]" + ColorReset
-}
-
 // Downloads files from a list of URLs in the input file asynchronously.
 func DownloadMultiple(cfg *config.Config) error {
 	file, err := os.Open(cfg.InputFile)
