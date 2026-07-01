@@ -132,7 +132,7 @@ func (pr *DownloadProgressReader) drawProgressBar() {
 			etaStr = "--"
 		}
 
-		fmt.Printf("\r %s / %s [%s] %6.2f%% %s %s",
+		fmt.Printf("\r %s / %s [%s] %6.2f%% %s %s\u001b[K",
 			FormatBytesBinary(float64(pr.downloaded)),
 			FormatBytesBinary(float64(pr.totalSize)),
 			bar,
@@ -142,7 +142,7 @@ func (pr *DownloadProgressReader) drawProgressBar() {
 		)
 	} else {
 		// Unknown size progress
-		fmt.Printf("\r %s [   <=>   ] %s",
+		fmt.Printf("\r %s [   <=>   ] %s\u001b[K",
 			FormatBytesBinary(float64(pr.downloaded)),
 			FormatSpeed(speed),
 		)
