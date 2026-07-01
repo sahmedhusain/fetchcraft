@@ -54,6 +54,41 @@ func GetDownloadPath(cfg *config.Config, rawURL string) (string, string, error) 
 	return targetPath, displayPath, nil
 }
 
+// A rate limit string (e.g. "400k", "2M") and returns speed in bytes/sec.
+func ParseRateLimit(rateStr string) (int64, error) {
+	if rateStr == "" {
+		return 0, nil
+	}
+	rateStr = strings.TrimSpace(rateStr)
+	var multiplier int64 = 1
+	var numStr string
+
+	if len(rateStr) > 0 {
+		lastChar := rateStr[len(rateStr)-1]
+		switch lastChar {
+		case 'k', 'K':
+			multiplier = 1024
+			numStr = rateStr[:len(rateStr)-1]
+		case 'm', 'M':
+			multiplier = 1024 * 1024
+			numStr = rateStr[:len(rateStr)-1]
+		case 'g', 'G':
+			multiplier = 1024 * 1024 * 1024
+			numStr = rateStr[:len(rateStr)-1]
+		default:
+			numStr = rateStr
+		}
+	}
+
+	var val int64
+	_, err := fmt.Sscanf(numStr, "%d", &val)
+	if err != nil {
+		return 0, fmt.Errorf("invalid rate limit format: %s", rateStr)
+	}
+
+	return val * multiplier, nil
+}
+
 // Downloads a single URL.
 func DownloadFile(cfg *config.Config, rawURL string) error {
 	startTime := time.Now()
@@ -62,6 +97,11 @@ func DownloadFile(cfg *config.Config, rawURL string) error {
 	targetPath, displayPath, err := GetDownloadPath(cfg, rawURL)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %v", err)
+	}
+
+	limit, err := ParseRateLimit(cfg.RateLimit)
+	if err != nil {
+		return err
 	}
 
 	fmt.Printf("sending request, awaiting response... ")
@@ -95,12 +135,18 @@ func DownloadFile(cfg *config.Config, rawURL string) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, resp.Body)
+	progressReader := NewDownloadProgressReader(resp.Body, resp.ContentLength, limit, cfg.Background)
+	_, err = io.Copy(out, progressReader)
 	if err != nil {
 		return fmt.Errorf("download failed: %v", err)
 	}
 
-	fmt.Printf("\nDownloaded [%s]\n", rawURL)
+	if !cfg.Background {
+		fmt.Println()
+		fmt.Println()
+	}
+
+	fmt.Printf("Downloaded [%s]\n", rawURL)
 	fmt.Printf("finished at %s\n", time.Now().Format("2006-01-02 15:04:05"))
 
 	return nil
