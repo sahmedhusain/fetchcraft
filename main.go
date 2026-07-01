@@ -7,6 +7,7 @@ import (
 
 	"wget/src/config"
 	"wget/src/download"
+	"wget/src/mirror"
 )
 
 func main() {
@@ -47,6 +48,19 @@ func main() {
 
 	if cfg.InputFile != "" {
 		err := download.DownloadMultiple(cfg)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	if cfg.Mirror {
+		if len(cfg.URLs) == 0 {
+			fmt.Println("wget: missing URL for mirror")
+			os.Exit(1)
+		}
+		err := mirror.MirrorSite(cfg, cfg.URLs[0])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
