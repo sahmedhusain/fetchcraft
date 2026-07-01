@@ -1,267 +1,210 @@
 # wget
 
-[![Rust](https://img.shields.io/badge/Rust-2021%20Edition-000000?style=flat&logo=rust)](https://www.rust-lang.org/)
-[![UDP Networking](https://img.shields.io/badge/Networking-UDP%20Protocol-orange)](#-how-the-code-works)
-[![Macroquad GUI](https://img.shields.io/badge/GUI-Macroquad-blue)](#-how-the-code-works)
+[![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev)
+[![CLI Tool](https://img.shields.io/badge/Interface-CLI-green)](#-usage)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
 
 <p align="center">
-	<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/rust/rust-original.svg" width="34" alt="Rust" />
+	<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/go/go-original.svg" width="34" alt="Go" />
 	<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/markdown/markdown-original.svg" width="34" alt="Markdown" />
 </p>
 
-**Maze Wars 3D** is a multiplayer 3D first-person shooter written in Rust. It's a modern tribute to the original 1974 *Maze War* game. The project uses the **Macroquad** game engine to draw a retro 3D wireframe world, standard UDP sockets for low-latency networking, and a custom raycaster built from scratch.
+**wget** is a command-line terminal utility written in Go for non-interactive downloads of files from the web. It supports HTTP/HTTPS protocols, bandwidth speed limiting, Unix-style daemonization (background downloading), concurrent batch downloads, and recursive website mirroring with offline link conversion.
 
 ---
 
 ## ⚡ What's cool about it?
 
-- **Retro 3D Raycasting**: Renders 3D walls and other players as glowing wireframe diamonds, entirely calculated using a custom DDA (Digital Differential Analysis) algorithm. No external 3D engine crates used!
-- **Smooth UDP Multiplayer**: Low-latency networking that synchronizes players, bot movements, lasers, and scoreboard stats at a smooth 30Hz tick rate.
-- **Sleek Connection Launcher**: A main menu screen where you can type server details, save aliases for your favorite hosts, and delete old items.
-- **AI Bots**: If you don't have enough players, you can spawn smart bots to fill up the server (max 4 players total).
-- **Map Editor**: An interactive mode for the host player to paint wall grids, generate random mazes with a single keypress, and upload them to everyone connected in real-time.
-- **High-DPI Support**: The interface is fully responsive. It launches fullscreen, resizes dynamically, and uses sharp vector text so the HUD looks clean on any monitor.
+- **Real-time Progress Bar**: Displays download stats in real-time. Features include binary size formatting (`KiB`/`MiB`/`GiB`), a smooth progress bar, percentage completion, live speed tracker, and estimated time remaining (ETA). Uses carriage return updates (`\r`) along with ANSI clear escape sequences (`\u001b[K`) to prevent terminal trailing character glitches.
+- **Strict Bandwidth Limiting**: Control the speed of the download using `--rate-limit` with support for `k` (KiB) and `M` (MiB) units (e.g. `--rate-limit=300k`).
+- **Unix-style Backgrounding (`-B`)**: Runs the download task in the background by daemonizing itself, writing a clean execution trace to `wget-log` and releasing control of the terminal instantly.
+- **Asynchronous Concurrent Downloads (`-i`)**: Reads a list of URLs from an input file and downloads them concurrently using Go's lightweight goroutines and waitgroups, showing sorted sizes and progress milestones.
+- **Robust Website Mirroring (`--mirror`)**: Crawls pages recursively using a BFS queue within the same domain. Supports filename suffix rejection (`-R`), directory exclusion (`-X`), and offline link conversion (`--convert-links`) for both HTML and CSS files.
 
 ---
 
 ## 📋 Table of Contents
 
 - [What's cool about it?](#-whats-cool-about-it)
-- [Quick Tour](#-quick-tour)
-- [Screenshots](#-screenshots)
+- [Available Flags](#%EF%B8%8F-available-flags)
+- [Quick Tour & Usage](#-quick-tour--usage)
 - [How the code works](#-how-the-code-works)
-  - [Game Logic & Flows](#-game-logic--flows)
-  - [Key Code Snippets](#-key-code-snippets)
-- [Running the game locally](#-running-the-game-locally)
+- [Running the tool locally](#-running-the-tool-locally)
 - [Project Files](#-project-files)
-- [Authors](#-authors)
+- [License](#-license)
 
 ---
 
-## 🧭 Quick Tour
+## ⚙️ Available Flags
 
-1. **Connect**: Start the client. You can use the launcher menu to save and click on servers, or bypass it using command-line arguments.
-2. **Lobby**: The first player to connect is crowned the **Host**. The Host can press keys `1`-`3` to switch default levels, `4` to generate a random maze, `B` to toggle AI bots, or `E` to open the map builder.
-3. **Fight**: Once the Host presses `G` to start the game, navigate the maze using `WASD` or Arrow keys. Click your mouse or hit `Space` to shoot lasers and score points!
-
-<p align="center">
-	<img src="https://capsule-render.vercel.app/api?type=rect&color=0:0EA5E9,100:111827&height=4&section=footer" width="100%" alt="Divider" />
-</p>
+| Flag | Description | Example |
+| :--- | :--- | :--- |
+| `-O` | Saves the downloaded file under a custom name. | `-O=meme.jpg` |
+| `-P` | Saves the downloaded file in a custom directory (handles `~` expansion). | `-P=~/Downloads/` |
+| `--rate-limit` | Throttles download speed (supports `k`/`K` for KiB/s, `m`/`M` for MiB/s). | `--rate-limit=300k` |
+| `-B` | Detaches and runs the download in the background (logs to `wget-log`). | `-B` |
+| `-i` | Reads an input file to download multiple URLs concurrently. | `-i=downloads.txt` |
+| `--mirror` | Crawls recursively to mirror a website locally under a domain folder. | `--mirror` |
+| `-R, --reject` | Suffixes of files to reject and avoid downloading during mirroring. | `-R=jpg,gif` |
+| `-X, --exclude` | Directory path prefixes to exclude and skip during mirroring. | `-X=/js,/assets` |
+| `--convert-links` | Rewrites links in downloaded pages to point to local relative files. | `--convert-links` |
 
 ---
 
-## 📸 Screenshots
+## 🧭 Quick Tour & Usage
 
-*Below are placeholders for the interface screens. You can add your own screenshots here to showcase your project.*
+### 1. Basic Download
+Downloads a file to the current directory with its original filename.
+```bash
+./wget https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+```
 
-<div align="center">
-	<table>
-		<tr>
-			<td align="center" width="50%">
-				<img src="screenshots/launcher.png" alt="Graphical Menu Launcher" width="100%" style="border: 2px solid #0EA5E9; border-radius: 8px;" />
-				<p><strong>Connection Launcher (with Saved History)</strong></p>
-			</td>
-			<td align="center" width="50%">
-				<img src="screenshots/lobby.png" alt="Match Lobby State" width="100%" style="border: 2px solid #0EA5E9; border-radius: 8px;" />
-				<p><strong>Match Lobby Coordinator (Max 4 Players)</strong></p>
-			</td>
-		</tr>
-		<tr>
-			<td align="center" width="50%">
-				<img src="screenshots/gameplay.png" alt="3D Viewport Raycaster" width="100%" style="border: 2px solid #0EA5E9; border-radius: 8px;" />
-				<p><strong>Retro 3D Raycasting Viewport & HUD</strong></p>
-			</td>
-			<td align="center" width="50%">
-				<img src="screenshots/editor.png" alt="In-Game Level Builder" width="100%" style="border: 2px solid #0EA5E9; border-radius: 8px;" />
-				<p><strong>2D Map Creator Mode</strong></p>
-			</td>
-		</tr>
-	</table>
-</div>
+### 2. Rename & Save Directory (`-O` and `-P`)
+Downloads a file, renames it to `meme.jpg`, and saves it inside the `~/Downloads/` directory (expanding the home directory path automatically).
+```bash
+./wget -O=meme.jpg -P=~/Downloads/ https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+```
+
+### 3. Bandwidth Rate Limiting (`--rate-limit`)
+Limits the download speed to a maximum of 300 KiB/s.
+```bash
+./wget --rate-limit=300k https://assets.01-edu.org/wgetDataSamples/20MB.zip
+```
+
+### 4. Background Downloading (`-B`)
+Detaches from the terminal, runs the download in the background, and logs status changes to `wget-log`.
+```bash
+./wget -B https://assets.01-edu.org/wgetDataSamples/20MB.zip
+```
+
+### 5. Asynchronous Batch Downloader (`-i`)
+Downloads all links listed in a text file concurrently.
+```bash
+./wget -i=downloads.txt
+```
+
+### 6. Website Mirroring (`--mirror` with exclusions and conversions)
+Crawls and mirrors `trypap.com`, excluding the `/img` path, and converts links to point to local resources for offline browsing.
+```bash
+./wget --mirror -X=/img --convert-links https://trypap.com/
+```
 
 ---
 
 ## 🏗 How the code works
 
-The game uses a server-authoritative structure. The server runs the physics, movement boundaries, bot AI, and hit detection. The client reads player inputs, transmits them to the server, and draws the game state.
+### 📊 Program Flows
 
-### 📊 Game Logic & Flows
-
-#### 1. Client-Server Network Sequence
-Here is how message exchange flows during gameplay:
+#### 1. Background Spawning Sequence
+Spawning a background process detaches control from the terminal:
 
 ```mermaid
 sequenceDiagram
-    participant Client as Client (Player)
-    participant Server as Server
+    participant CLI as Terminal / Parent Process
+    participant Env as Environment
+    participant Child as Background Child Process
     
-    Client->>Server: ClientMessage::Join { name }
-    Server->>Client: ServerMessage::Welcome { map, level, player_id }
-    Note over Client,Server: Connection established
+    CLI->>Env: Set WGET_BACKGROUND_CHILD = 1
+    CLI->>Child: Spawns duplicate command asynchronously
+    Note over CLI: Print "Output will be written to ‘wget-log’."
+    CLI->>CLI: Exit(0) (Terminal control returned)
     
-    rect rgb(240, 240, 250)
-        Note over Server: Tick Loop (30Hz)
-        Server->>Client: ServerMessage::Tick (Positions, Scores, Lasers)
-    end
-    
-    Client->>Server: ClientMessage::Input { MoveForward/TurnLeft }
-    Client->>Server: ClientMessage::Shoot
-    Client->>Server: ClientMessage::Heartbeat (every 1s)
+    Child->>Child: Check WGET_BACKGROUND_CHILD == 1
+    Child->>Child: Execute downloads quietly (stdout -> wget-log)
+    Child->>Child: Exit(0) on completion
 ```
 
-#### 2. Level Editor Synchronization
-When the Host designs a custom map, it syncs with other players automatically:
+#### 2. Mirroring Crawl Flow
+Recursive BFS crawl for mirroring sites:
 
 ```mermaid
 flowchart TD
-    Host[Host Player] -->|Press E| Editor[Level Editor Mode]
-    Editor -->|Left-Click / Right-Click| Paint[Paint Wall / Erase Wall]
-    Paint -->|Press U| SendMap[Send ClientMessage::CustomMap to Server]
-    SendMap --> Server[Server Receives & Updates Level]
-    Server -->|Broadcast ServerMessage::MapUpdate| Clients[All Connected Clients]
-    Clients -->|Redraw Map| UI[Refresh Gameplay & Mini-map]
-```
-
-#### 3. Match Progression flow
-Players transition between states depending on host actions and gameplay events:
-
-```mermaid
-flowchart TD
-    Start([Player Connects]) --> Lobby[Lobby State]
-    Lobby -->|Wait for Host| Wait[Lobby Screen]
-    HostAction[Host Actions] -->|Select level / Toggle bots| Lobby
-    HostAction -->|Press G| StartGame[Start Game]
-    StartGame --> Playing[Match State]
-    Playing -->|Shoot Laser| UpdateScores[Update Scoreboard on Hit]
-    Playing -->|Health = 0| Respawn[Respawn at random spot]
-    Playing -->|Press ESC| Disconnect([Disconnect to Launcher])
+    Start([Mirror Site URL]) --> Queue[Enqueue seed URL]
+    Queue --> Loop{Queue empty?}
+    Loop -- Yes --> End([Post-process link conversion])
+    Loop -- No --> Dequeue[Pop item URL]
+    Dequeue --> HostCheck{Same domain/host?}
+    HostCheck -- No --> Loop
+    HostCheck -- Yes --> FilterCheck{Excluded or Rejected?}
+    FilterCheck -- Yes --> Loop
+    FilterCheck -- No --> Download[Download File]
+    Download --> Parse{HTML or CSS?}
+    Parse -- Yes --> Extract[Extract Links]
+    Extract --> EnqueueNew[Enqueue unvisited URLs]
+    EnqueueNew --> Loop
+    Parse -- No --> Loop
 ```
 
 ---
 
 ### 💻 Key Code Snippets
 
-#### 1. 2D Raycasting using Digital Differential Analysis (DDA)
-Instead of taking tiny steps along a ray (which is slow and can miss corners), we jump directly from one grid line to the next. This makes the wall boundaries clean and fast to compute:
+#### 1. Rate Limiting Reader Wrapper
+We restrict bandwidth by calculating the time that should have elapsed for the bytes downloaded under the target speed. If the download is running too fast, the reader sleeps to throttle the rate:
+```go
+func (pr *DownloadProgressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	if n > 0 {
+		pr.downloaded += int64(n)
 
-```rust
-pub fn raycast(
-    px: f32, py: f32, angle: f32,
-    map_cells: &[bool], map_width: usize, map_height: usize
-) -> Option<RaycastResult> {
-    let ray_dir_x = angle.cos();
-    let ray_dir_y = angle.sin();
-    let mut map_x = px.floor() as i32;
-    let mut map_y = py.floor() as i32;
-
-    // Calculate how far the ray travels to cross one grid square horizontal/vertical
-    let delta_dist_x = if ray_dir_x.abs() < 1e-6 { 1e30 } else { (1.0 / ray_dir_x).abs() };
-    let delta_dist_y = if ray_dir_y.abs() < 1e-6 { 1e30 } else { (1.0 / ray_dir_y).abs() };
-
-    // Set up step direction and initial distance to the first grid boundary
-    let (step_x, side_dist_x) = if ray_dir_x < 0.0 {
-        (-1, (px - map_x as f32) * delta_dist_x)
-    } else {
-        (1, (map_x as f32 + 1.0 - px) * delta_dist_x)
-    };
-
-    let (step_y, side_dist_y) = if ray_dir_y < 0.0 {
-        (-1, (py - map_y as f32) * delta_dist_y)
-    } else {
-        (1, (map_y as f32 + 1.0 - py) * delta_dist_y)
-    };
-
-    // Step through the grid until we hit a wall or run out of distance
-    // (Full collision steps can be found in src/raycast.rs)
+		if pr.rateLimit > 0 {
+			now := time.Now()
+			elapsed := now.Sub(pr.startTime)
+			expected := time.Duration(float64(pr.downloaded) / float64(pr.rateLimit) * float64(time.Second))
+			if elapsed < expected {
+				time.Sleep(expected - elapsed)
+			}
+		}
+		// Progress bar updates...
+	}
+	return n, err
 }
 ```
 
-#### 2. Clean Network Packets
-We use standard Rust enums to specify client inputs and server replies. Serde and Bincode convert them to compact bytes before sending them over the UDP sockets:
-
-```rust
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum ClientMessage {
-    Join { name: String },
-    Input { action: PlayerAction },
-    Shoot,
-    RequestLevel { level_idx: usize },
-    Heartbeat,
-    Leave,
-    CustomMap { width: usize, height: usize, cells: Vec<bool> },
-    StartGame,
-    ToggleBots,
+#### 2. Relative Link Calculation
+To convert absolute URLs or paths to relative links for offline viewing, we compute the relative path between the directory of the current HTML/CSS file and the target resource:
+```go
+// Calculate relative path from current HTML dir to target asset
+relPath, err := filepath.Rel(filepath.Dir(currentHTMLPath), targetAssetPath)
+if err == nil {
+	node.Val = filepath.ToSlash(relPath)
 }
 ```
 
 ---
 
-## 🚀 Running the game locally
+## 🚀 Running the tool locally
 
 ### Setup
-Ensure you have [Rust](https://rustup.rs/) installed, then fetch the codebase:
-
+Ensure you have the Go compiler installed (version 1.20 or newer). Verify your installation:
 ```bash
-# Verify the code builds
-cargo check
+go version
 ```
 
-### 1. Launching the Server
-By default, the server binds to port `10500` with bots enabled. You can customize this from your terminal:
-
+### Build
+Compile the codebase into a single executable `wget`:
 ```bash
-# Basic start
-cargo run --release --bin server
-
-# Custom port, start with level 2, and turn off bots initially
-cargo run --release --bin server -- --port 12000 --level 2 --bots false
-```
-
-### 2. Launching the Client
-Running the client without arguments opens the graphical menu:
-
-```bash
-# Opens responsive main menu launcher
-cargo run --release --bin client
-```
-
-To join a match immediately and bypass the launcher, add the IP and your nickname:
-
-```bash
-# Direct connect command
-cargo run --release --bin client -- --ip 127.0.0.1:10500 --name Sayed
+go build -o wget
 ```
 
 ---
 
 ## 📁 Project Files
 
-- `hosts_history.txt` — Saved connections history database.
-- `Roboto-Regular.ttf` — Vector TTF font embedded directly into the executable.
-- `getting_started.md` — Detailed setups, playing instructions, and controls.
-- `src/` — Game engine modules:
-  - `lib.rs` — Config variables.
-  - `protocol.rs` — Network packets layout.
-  - `levels.rs` — Maps and DFS maze generator.
-  - `raycast.rs` — Custom DDA formulas.
-- `src/bin/server/` — Server source:
-  - `main.rs` — Handles network packets, players, lobby, ticks.
-  - `physics.rs` — Spawn formulas, laser hits.
-  - `ai.rs` — AI bot logic.
-- `src/bin/client/` — Client source:
-  - `main.rs` — Orchestrates game states and graphics layout.
-  - `launcher.rs` — Draws launcher cards and history list.
-  - `render.rs` -> Viewport drawings.
-  - `minimap.rs` -> Navigational overlay.
-  - `editor.rs` -> Grid painter.
+- `main.go` — Entrypoint, parses CLI configuration, and spawns the background child process if `-B` is specified.
+- `src/` — Core modules:
+  - `config/config.go` — Parses and validates command-line arguments and flags, and expands home directories (`~`).
+  - `download/download.go` — Orchestrates file downloads, timings, content size formatting, and file system creations.
+  - `download/progressbar.go` — Handles progress bar updates, speeds, ETA calculations, and rate limiting.
+  - `download/async.go` — Coordinates asynchronous concurrent downloads for the `-i` flag.
+  - `mirror/mirror.go` — Implements BFS website crawling, rejections (`-R`), exclusions (`-X`), and offline link conversions.
+- `getting_started.md` — Detailed setup instructions and step-by-step verification flows.
 
 ---
 
 ## 👥 Authors
 
-- Sayed Ahmed Husain — sayedahmed97.sad@gmail.com
-- Salah Yuksel
-- Qassim Aljaffer
+- Sayed Ahmed Husain
+- Salah Yuksel 
 
-MIT licensed (see `LICENSE.md`). Have fun playing!
+MIT licensed (see `LICENSE.md`). Have fun downloading!

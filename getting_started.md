@@ -1,180 +1,125 @@
 # Getting Started Guide 🚀
 
-This guide will walk you through compiling, running, and playing **Maze Wars 3D**. 
+This guide will walk you through compiling, running, and testing this custom **wget** implementation.
 
 ---
 
 ## 📋 Table of Contents
 1. [First Steps & Prerequisites](#-first-steps--prerequisites)
 2. [Compiling the Code](#-compiling-the-code)
-3. [Setting up the Server](#-setting-up-the-server)
-4. [Launching the Client](#-launching-the-client)
-5. [Using the Connection Launcher](#-using-the-connection-launcher)
-6. [How the Lobby Works](#-how-the-lobby-works)
-7. [In-Game Controls](#-in-game-controls)
-8. [Drawing Custom Maps](#-drawing-custom-maps)
-9. [Setting up LAN Matches](#-setting-up-lan-matches)
+3. [Core Features & Usage](#-core-features--usage)
+4. [Website Mirroring & Offline Tunnels](#-website-mirroring--offline-tunnels)
+5. [Behind the Scenes: How It Works](#-behind-the-scenes-how-it-works)
 
 ---
 
 ## 🛠 First Steps & Prerequisites
 
-To build and run this project, you will need the Rust toolchain on your computer. If you don't have it yet, you can get it by running:
+To compile and run this project, you need the Go programming language toolchain installed on your computer. If you do not have Go, you can download it from the official site: [go.dev/dl](https://go.dev/dl/).
 
+Once installed, verify it works by checking your Go version:
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+go version
 ```
-
-Once installed, restart your terminal and verify it works:
-```bash
-rustc --version
-cargo --version
-```
+*Note: This project is built using modern Go features and requires Go 1.20 or newer.*
 
 ---
 
 ## 🏗 Compiling the Code
 
-You can build the project by running:
+To build the executable binary from the source files:
 
 ```bash
-# Compiles both server and client binaries
-cargo build --release
+# Compiles the source files and outputs a single executable named "wget"
+go build -o wget
 
-# Quickly checks if the code compiles without producing the output binary
-cargo check
+# Run static analysis and vetting to ensure code matches best practices
+go vet ./...
+```
+
+Once built, you will see a `wget` (or `wget.exe` on Windows) file in the root directory. You can run all commands directly using `./wget`.
+
+---
+
+## ⚙️ Core Features & Usage
+
+Here are the basic commands for downloading files:
+
+### 1. Downloading to the Current Directory
+Downloads the file and preserves its original name.
+```bash
+./wget https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+```
+
+### 2. Renaming the Output File (`-O`)
+Saves the download under a custom filename.
+```bash
+./wget -O=meme.jpg https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+```
+
+### 3. Saving to a Specific Path (`-P`)
+Specifies the destination directory. Directories will be created automatically if they do not exist.
+```bash
+./wget -P=~/Downloads/ -O=meme.jpg https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+```
+
+### 4. Limiting Download Speeds (`--rate-limit`)
+Limits the bandwidth consumption. You can specify limits in bytes/sec, kilobytes/sec (`k` or `K`), or megabytes/sec (`m` or `M`).
+```bash
+# Limit to 300 Kilobytes per second
+./wget --rate-limit=300k https://assets.01-edu.org/wgetDataSamples/20MB.zip
+
+# Limit to 2 Megabytes per second
+./wget --rate-limit=2M https://assets.01-edu.org/wgetDataSamples/20MB.zip
+```
+
+### 5. Running in the Background (`-B`)
+Forks the process into the background, returning terminal control to you immediately. Output details are logged to a file called `wget-log`.
+```bash
+./wget -B https://assets.01-edu.org/wgetDataSamples/20MB.zip
+```
+
+### 6. Concurrent Multi-file Downloads (`-i`)
+Downloads multiple files in parallel. The program reads from a file containing a list of URLs (one per line).
+```bash
+# Create list of files to download
+echo -e "https://assets.01-edu.org/wgetDataSamples/Image_10MB.zip\nhttps://assets.01-edu.org/wgetDataSamples/20MB.zip" > download.txt
+
+# Run concurrent batch downloader
+./wget -i=download.txt
 ```
 
 ---
 
-## ⚙️ Setting up the Server
+## 🌐 Website Mirroring & Offline Tunnels
 
-The server keeps track of player coordinates, spawns, scores, lasers, and AI bots. It accepts a few flags to customize settings:
+The mirroring flag (`--mirror`) downloads the website file structure and assets. You can fine-tune what to download using the following optional flags in conjunction with `--mirror`:
 
-### Commands
-```bash
-cargo run --release --bin server -- [options]
-```
-
-### Options
-| Option | What it does | Default |
+| Flag | Meaning | Example |
 | :--- | :--- | :--- |
-| `--port, -p <port>` | Port to bind and listen on (UDP) | `10500` |
-| `--bots, -b <true/false>` | Enable or disable AI bots | `true` |
-| `--level, -l <level_idx>` | Initial map index (0 to 3) | `0` |
-| `--help, -h` | Shows usage instructions | N/A |
+| `-R, --reject` | Suffixes of files to reject and avoid downloading | `--reject=jpg,gif` |
+| `-X, --exclude` | Directory path prefixes to exclude from the crawl | `-X=/js,/assets` |
+| `--convert-links` | Rewrites links in HTML/CSS to point to local relative files | `--convert-links` |
 
-### Example
-To host a match on port `12345`, on Level 2 (Labyrinth), and with bots disabled:
+### Mirroring Example
+To mirror the `trypap.com` website, exclude the images folder, and convert links for offline viewing:
 ```bash
-cargo run --release --bin server -- --port 12345 --level 2 --bots false
+./wget --mirror -X=/img --convert-links https://trypap.com/
 ```
 
 ---
 
-## 🎮 Launching the Client
+## 🧠 Behind the Scenes: How It Works
 
-The client connects to a server, shows the wireframe 3D view, displays the scoreboard, and lets you play.
+### Rate Limiter
+The rate limiter calculates how much time *should* have elapsed under the target speed for the number of bytes processed so far:
+$$\text{Expected Duration} = \frac{\text{Bytes Transferred}}{\text{Rate Limit}}$$
+If the actual elapsed duration is less than the expected duration, the thread sleeps for the difference ($\text{Expected} - \text{Actual}$), creating a highly precise and adaptive speed governor.
 
-### Connecting via GUI Launcher (Recommended)
-Simply start the client binary without any flags. This opens the main menu launcher where you can manage your favorite servers:
-```bash
-cargo run --release --bin client
-```
-
-### Direct Connection (CLI Bypass)
-If you want to skip the main menu and connect directly, pass the IP address and your username as arguments:
-```bash
-# Using named arguments
-cargo run --release --bin client -- --ip 127.0.0.1:10500 --name Sayed
-
-# Shorthand positional arguments
-cargo run --release --bin client -- 127.0.0.1:10500 Sayed
-```
-
----
-
-## 🖥 Using the Connection Launcher
-
-If you launch the client without arguments, you'll see a responsive, modern connection launcher.
-
-- **Form Fields**: Fill in the server IP (e.g. `127.0.0.1:10500`), your username, and an optional nickname/alias (like "Main Server").
-- **Tab Key Navigation**: Press `Tab` to cycle between input fields, or click on them directly.
-- **Holding Backspace**: If you want to erase a field quickly, hold down the Backspace key.
-- **Connection History**: The launcher saves your history to `hosts_history.txt`. Next time you play, click on any saved row in the history list to fill in the inputs instantly.
-- **Delete old entries**: Click the red `[x]` next to a saved server to remove it from your history list.
-
----
-
-## 👥 How the Lobby Works
-
-When you connect, you enter the lobby. Here are the rules of the lobby:
-- **Who is the Host?** The first player to connect to the server becomes the Host. Guests will see `"Waiting for host to start..."` on their screens.
-- **What can the Host do?** Only the Host can change the level, toggle bots, enter the level editor, or start the match.
-- **Lobby Keys for the Host**:
-  - `1`, `2`, `3` — Load pre-designed static maps (Level 0, 1, 2).
-  - `4` — Generate a random level map using the DFS maze algorithm.
-  - `B` — Toggle AI bots (spawns bots to reach the 4-player cap, or clears them).
-  - `E` — Open the Level Editor to paint custom walls.
-  - `G` — Start the match.
-
----
-
-## 🕹 In-Game Controls
-
-Once the match starts:
-
-- **Movement**:
-  - `W` / `Up Arrow` — Move forward one grid unit.
-  - `S` / `Down Arrow` — Move backward one grid unit.
-  - `A` / `Left Arrow` — Turn left 90 degrees.
-  - `D` / `Right Arrow` — Turn right 90 degrees.
-- **Combat**:
-  - `Space` or `Mouse Left Click` — Shoot a laser forward down your sight line.
-- **Leave Match**:
-  - `ESC` — Disconnect from the match and return to the main connection launcher.
-
----
-
-## 🛠 Drawing Custom Maps
-
-Only the **Host** can enter the Map Editor. Press `E` while in the Lobby to start painting:
-
-- **Drawing**: Left-click on any grid square to place a wall.
-- **Erasing**: Right-click on a grid square to remove a wall. (Note: Border walls are locked to keep players inside).
-- **Clear Canvas**: Press `C` to wipe the grid (retains outer border walls).
-- **Random Maze**: Press `R` to generate a random DFS labyrinth.
-- **Sync & Upload**: Press `U` to send your custom map to the server. The server will update the active level and instantly push the new map to all players in the lobby.
-- **Exit Editor**: Press `E` to close the editor and return to the lobby.
-
----
-
-## 🌐 Setting up LAN Matches
-
-To play with friends on the same local Wi-Fi or Ethernet network:
-
-1. **Find your Local IP Address**:
-   - On macOS: Run `ipconfig getifaddr en0` in the terminal.
-   - On Windows: Run `ipconfig` in the command prompt.
-2. **Start the Server**:
-   Host the server on your machine:
-   ```bash
-   cargo run --release --bin server -- --port 10500
-   ```
-3. **Connect the Clients**:
-   Give your local IP (e.g. `192.168.1.53`) to your friends. They can launch their clients, enter your IP and port (`192.168.1.53:10500`), type their nickname, and click Connect!
-
-### Running a Local Test Sandbox
-If you want to test multiplayer mechanics on a single computer, open three terminal windows:
-
-```bash
-# Terminal 1: Start the server
-cargo run --bin server
-
-# Terminal 2: Connect first client (Host)
-cargo run --bin client -- 127.0.0.1:10500 HostPlayer
-
-# Terminal 3: Connect second client (Guest)
-cargo run --bin client -- 127.0.0.1:10500 FriendPlayer
-```
-Press `B` in the Host terminal to spawn bots, and `G` to start the game!
+### Website Scraper & Crawler
+The `--mirror` flag initiates a Breadth-First Search (BFS) crawl:
+1. Parses the seed URL to establish the target host.
+2. Fetches the page. If it is HTML, it parses the tag tree (for `a`, `link`, and `img` elements) and extracts links. If it is CSS, it scans for `url(...)` declarations using regular expressions.
+3. Resolves extracted URLs to absolute paths and validates them against the target host, exclusion paths (`-X`), and file rejections (`-R`).
+4. If a URL is valid and unvisited, it is added to the BFS queue and downloaded using the core download module.
+5. After crawling finishes, if `--convert-links` is active, the tool loops through all downloaded HTML and CSS files, translating URLs pointing to other downloaded assets into local relative filesystem paths.
