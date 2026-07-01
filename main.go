@@ -45,6 +45,15 @@ func main() {
 		os.Exit(0)
 	}
 
+	if cfg.InputFile != "" {
+		err := download.DownloadMultiple(cfg)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	if len(cfg.URLs) > 0 {
 		err := download.DownloadFile(cfg, cfg.URLs[0])
 		if err != nil {
