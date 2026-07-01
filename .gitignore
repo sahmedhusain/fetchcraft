@@ -97,11 +97,3 @@ $RECYCLE.BIN/
 *.msp
 # Windows shortcuts
 *.lnk
-
-# Added by cargo
-/target
-
-audit.md
-objective.md
-getting_started.md
-README.md
