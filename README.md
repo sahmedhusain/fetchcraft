@@ -42,9 +42,29 @@ graph TD
     C -- Batch Flag -i --> F[Async Goroutine Worker Pool]
     C -- Mirror Flag --mirror --> G[BFS Web Crawler - src/mirror]
     
-    D & F --> H[Rate-Limited Progress Reader & ANSI Bar]
+    D --> H[Rate-Limited Progress Reader & ANSI Bar]
+    F --> H
     E --> I[(fetchcraft-log File Writer)]
     G --> J[Link Converter & Local Disk File System]
+```
+
+---
+
+## 🖥️ Live Terminal Execution & Progress Bar Preview
+
+Below is an illustration of FetchCraft downloading a file with real-time rate limiting, live progress bar, throughput speed, and estimated time remaining (ETA):
+
+```text
+$ ./fetchcraft --rate-limit=400k https://example.com/data/archive.zip
+start at 2026-09-13 03:10:15
+
+sending request, awaiting response... status 200 OK
+content length: 20971520 (20.00 MiB) [application/zip]
+saving to: 'archive.zip'
+
+ 12.45 MiB / 20.00 MiB [=====================>---------------]  62.25% 400.00 KiB/s 19s
+
+2026-09-13 03:10:34 (400.00 KiB/s) - 'archive.zip' saved [20971520/20971520]
 ```
 
 ---
