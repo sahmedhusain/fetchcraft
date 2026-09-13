@@ -1,4 +1,4 @@
-module wget
+module fetchcraft
 
 go 1.26.2
 

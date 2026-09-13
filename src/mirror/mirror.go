@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"wget/src/config"
-	"wget/src/download"
+	"fetchcraft/src/config"
+	"fetchcraft/src/download"
 )
 
 // MirrorSite starts the website mirroring process.

@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/exec"
 
-	"wget/src/config"
-	"wget/src/download"
-	"wget/src/mirror"
+	"fetchcraft/src/config"
+	"fetchcraft/src/download"
+	"fetchcraft/src/mirror"
 )
 
 func main() {

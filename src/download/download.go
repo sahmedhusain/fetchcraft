@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"wget/src/config"
+	"fetchcraft/src/config"
 )
 
 // Formats size in bytes and decimal MB/GB representation.

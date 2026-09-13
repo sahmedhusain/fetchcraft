@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"wget/src/config"
+	"fetchcraft/src/config"
 )
 
 
