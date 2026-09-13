@@ -37,10 +37,10 @@ graph TD
     A[CLI Input Command] --> B[Config Parser Engine - src/config]
     B --> C{Execution Mode?}
     
-    C -- Standard Download --> D[Download Engine - src/download]
-    C -- Background Flag -B --> E[Daemon Process Spawner]
-    C -- Batch Flag -i --> F[Async Goroutine Worker Pool]
-    C -- Mirror Flag --mirror --> G[BFS Web Crawler - src/mirror]
+    C -->|Standard Download| D[Download Engine - src/download]
+    C -->|Background Flag -B| E[Daemon Process Spawner]
+    C -->|Batch Flag -i| F[Async Goroutine Worker Pool]
+    C -->|Mirror Flag --mirror| G[BFS Web Crawler - src/mirror]
     
     D --> H[Rate-Limited Progress Reader & ANSI Bar]
     F --> H
@@ -96,20 +96,22 @@ flowchart TD
     Start([Mirror Target URL]) --> Queue[Enqueue Seed URL]
     Queue --> Loop{Queue Empty?}
     
-    Loop -- Yes --> PostProcess[Execute --convert-links HTML/CSS Link Conversion] --> End([Complete])
-    Loop -- No --> Dequeue[Pop Next URL]
+    Loop -->|Yes| PostProcess["Execute link conversion (--convert-links)"]
+    PostProcess --> End([Complete])
+    Loop -->|No| Dequeue[Pop Next URL]
     
     Dequeue --> HostCheck{Same Domain / Host?}
-    HostCheck -- No --> Loop
-    HostCheck -- Yes --> FilterCheck{Matches Suffix Rejection -R or Path Exclusion -X?}
+    HostCheck -->|No| Loop
+    HostCheck -->|Yes| FilterCheck{"Matches Rejection (-R) or Exclusion (-X)?"}
     
-    FilterCheck -- Yes --> Loop
-    FilterCheck -- No --> Fetch[Download Resource to Disk]
+    FilterCheck -->|Yes| Loop
+    FilterCheck -->|No| Fetch[Download Resource to Disk]
     
     Fetch --> ContentCheck{HTML or CSS Resource?}
-    ContentCheck -- Yes --> Extract[Parse & Extract Hyperlinks]
-    Extract --> EnqueueNew[Enqueue Unvisited Resource URLs] --> Loop
-    ContentCheck -- No --> Loop
+    ContentCheck -->|Yes| Extract[Parse & Extract Hyperlinks]
+    Extract --> EnqueueNew[Enqueue Unvisited Resource URLs]
+    EnqueueNew --> Loop
+    ContentCheck -->|No| Loop
 ```
 
 ---
